@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI-Powered Student Career & Skill Advisor</title>
+<style>
+:root{--bg:#f3f6fa;--card:#fff;--ink:#16222e;--mute:#5b6b7a;--brand:#1f3a5f;--acc:#0e9aa7;--line:#d9e2ec}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1720;--card:#18232f;--ink:#e8eef4;--mute:#9fb0c0;--brand:#7fb3e6;--acc:#4cc9d4;--line:#2a3948}}
+*{box-sizing:border-box}body{margin:0;font-family:Georgia,'Times New Roman',serif;background:var(--bg);color:var(--ink);line-height:1.5}
+header{background:#1f3a5f;color:#fff;padding:28px 18px}
+header h1{margin:0 0 6px;font-size:1.5rem}header p{margin:0;color:#b9d6ef;font-family:system-ui,sans-serif;font-size:.95rem}
+main{max-width:760px;margin:0 auto;padding:16px}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+h2{font-size:1.1rem;margin:0 0 4px;color:var(--brand)}small{color:var(--mute);font-family:system-ui,sans-serif}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chips label{font-family:system-ui,sans-serif;font-size:.9rem;border:1px solid var(--line);border-radius:999px;padding:7px 13px;cursor:pointer;user-select:none}
+.chips input{display:none}.chips input:checked+span{font-weight:700}
+.chips label:has(input:checked){background:var(--acc);border-color:var(--acc);color:#fff}
+.chips label:has(input:focus-visible){outline:2px solid var(--brand);outline-offset:2px}
+button{width:100%;padding:14px;font-size:1rem;font-weight:700;border:0;border-radius:10px;background:var(--brand);color:#fff;cursor:pointer;font-family:system-ui,sans-serif}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:6px 0 10px}.bar i{display:block;height:100%;background:var(--acc)}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.top b{font-size:1.05rem}.pct{color:var(--acc);font-weight:700;font-family:system-ui,sans-serif}
+.tag{display:inline-block;font-family:system-ui,sans-serif;font-size:.8rem;padding:3px 9px;border-radius:6px;margin:2px 4px 2px 0}
+.have{background:#d6f3ee;color:#0b5d52}.gap{background:#fde6d3;color:#8a3b00}
+ol{padding-left:20px;margin:6px 0}a{color:var(--brand)}
+.empty{color:var(--mute);font-family:system-ui,sans-serif}
+footer{text-align:center;color:var(--mute);font-family:system-ui,sans-serif;font-size:.8rem;padding:10px 0 30px}
+</style></head><body>
+<header><h1>Student Career & Skill Advisor</h1>
+<p>Pick your interests and skills. Get matching careers and a learning roadmap.</p></header>
+<main>
+<section><h2>1. Your interests</h2><small>Select all that apply</small><div class="chips" id="interests"></div></section>
+<section><h2>2. Skills you already have</h2><small>Select all that apply</small><div class="chips" id="skills"></div></section>
+<button id="go">Find my career matches</button>
+<div id="out" style="margin-top:14px"><p class="empty">Your results will appear here.</p></div>
+<footer>AICTE | IBM SkillsBuild Final Project</footer>
+</main>
+<script>
+const INTERESTS=["Data & numbers","Building apps","AI & machine learning","Cloud & servers","Security","Design & creativity","Helping people","Business & strategy"];
+const CAREERS=[
+{n:"Data Analyst",i:["Data & numbers","Business & strategy"],s:["Python","SQL","Excel","Statistics","Data Visualization"],c:"Data Analytics"},
+{n:"AI / ML Engineer",i:["AI & machine learning","Data & numbers"],s:["Python","Statistics","Machine Learning","Math","Git"],c:"Artificial Intelligence Fundamentals"},
+{n:"Web Developer",i:["Building apps","Design & creativity"],s:["HTML/CSS","JavaScript","Git","React","Problem Solving"],c:"Web Development"},
+{n:"Cloud Engineer",i:["Cloud & servers","Building apps"],s:["Linux","Networking","Python","Git","Cloud Basics"],c:"Cloud Computing"},
+{n:"Cybersecurity Analyst",i:["Security","Cloud & servers"],s:["Networking","Linux","Problem Solving","Cybersecurity Basics","Python"],c:"Cybersecurity"},
+{n:"UI/UX Designer",i:["Design & creativity","Helping people"],s:["Design Tools","Communication","HTML/CSS","User Research","Creativity"],c:"UX Design"},
+{n:"Business Analyst",i:["Business & strategy","Helping people","Data & numbers"],s:["Excel","SQL","Communication","Data Visualization","Problem Solving"],c:"Business Analysis"}];
+const SKILLS=[...new Set(CAREERS.flatMap(c=>c.s))].sort();
+function chips(id,list,name){document.getElementById(id).innerHTML=list.map(x=>`<label><input type="checkbox" name="${name}" value="${x}"><span>${x}</span></label>`).join("")}
+chips("interests",INTERESTS,"i");chips("skills",SKILLS,"s");
+const vals=n=>[...document.querySelectorAll(`input[name=${n}]:checked`)].map(e=>e.value);
+document.getElementById("go").onclick=()=>{
+ const I=vals("i"),S=vals("s"),out=document.getElementById("out");
+ if(!I.length&&!S.length){out.innerHTML='<p class="empty">Select at least one interest or skill first.</p>';return}
+ const res=CAREERS.map(c=>{
+  const si=c.i.filter(x=>I.includes(x)).length/c.i.length;
+  const have=c.s.filter(x=>S.includes(x)),gap=c.s.filter(x=>!S.includes(x));
+  const ss=have.length/c.s.length;
+  return {...c,have,gap,score:Math.round((0.4*si+0.6*ss)*100)};
+ }).sort((a,b)=>b.score-a.score).slice(0,3);
+ out.innerHTML=res.map((r,k)=>`<section><div class="top"><b>${k+1}. ${r.n}</b><span class="pct">${r.score}% match</span></div>
+ <div class="bar"><i style="width:${r.score}%"></i></div>
+ <div>${r.have.map(x=>`<span class="tag have">${x}</span>`).join("")||'<small>No matching skills yet</small>'}</div>
+ <div><small>Skills to learn:</small><br>${r.gap.map(x=>`<span class="tag gap">${x}</span>`).join("")||"<small>None, you are ready.</small>"}</div>
+ <h2 style="margin-top:12px">Learning roadmap</h2><ol>
+ ${r.gap.slice(0,4).map((g,j)=>`<li>Week ${j+1}: learn ${g} and practise with a small exercise</li>`).join("")}
+ <li>Week ${Math.min(r.gap.length,4)+1}: build one mini project using these skills</li></ol>
+ <small>Suggested course: <a href="https://skillsbuild.org" target="_blank" rel="noopener">IBM SkillsBuild: ${r.c}</a></small></section>`).join("");
+ out.scrollIntoView({behavior:"smooth"});
+};
+</script></body></html>
